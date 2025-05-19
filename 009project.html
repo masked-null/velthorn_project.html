@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>zyro.velthorn // terminal log</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+  html, body {
+    margin: 0; padding: 0;
+    background: #000;
+    color: #00cc66;
+    font-family: 'Share Tech Mono', monospace;
+    height: 100%;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+
+  #terminal {
+    padding: 40px;
+    white-space: pre-line;
+    overflow-y: auto;
+    height: 100vh;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+  }
+
+  .prompt { color: #00ff99; }
+  .error { color: #cc0000; }
+  .log { color: #00ffcc; }
+  .interactive {
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    text-decoration: underline;
+  }
+  .interactive.yes { color: #00ff99; }
+  .interactive.no { color: #cc0000; }
+
+  @keyframes shake {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(-5px, 0); }
+    40% { transform: translate(5px, 0); }
+    60% { transform: translate(-5px, 0); }
+    80% { transform: translate(5px, 0); }
+    100% { transform: translate(0, 0); }
+  }
+
+  .shake {
+    animation: shake 0.4s;
+  }
+
+  ::selection {
+    background: #00ff99;
+    color: #000;
+  }
+
+  #redOverlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(255, 0, 0, 0);
+    pointer-events: none;
+    z-index: 9999;
+    transition: background-color 0.3s ease-out;
+  }
+</style>
+</head>
+<body>
+  <div id="terminal"></div>
+  <div id="redOverlay"></div>
+
+  <audio id="typingSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+  <audio id="glitchSound" src="https://actions.google.com/sounds/v1/alarms/bugle_tune.ogg" preload="auto"></audio>
+  <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
+
+<script>
+  const terminal = document.getElementById('terminal');
+  const typingSound = document.getElementById('typingSound');
+  const glitchSound = document.getElementById('glitchSound');
+  const errorSound = document.getElementById('errorSound');
+  const redOverlay = document.getElementById('redOverlay');
+
+  let isTyping = false;
+  let errorClicks = 0;
+  const maxErrorClicks = 5;
+
+  const initialLog = `
+<span class="prompt">root@zyro_shell:/blackroom#</span> boot_sequence --load-profile
+[+] Loading terminal...
+[+] Patching fractured memory...
+[+] Random thread 0x92: "She looked exactly like me."
+[+] Deep Echo Initialized: Awareness + 5%
+[+] Root Trace Running.... ██░░░░░░░░░░ 12%
+[+] Black Room Reflection Depth: 94%
+[+] Subconscious Override Flag Raised
+
+<span class="prompt">root@zyro_shell:/blackroom#</span> cat /data/core/identity.zv
+:: ID: Zyro Velthorn
+:: TYPE: Clone (Cycle 9)
+:: STATUS: AWAKE (Level 3)
+:: LOCATION: /unknown/grid/
+:: PARANOIA SIGNAL: Rising
+:: CODED WHISPERS: "Zyro... find the original..."
+:: INIT DATE: redacted
+
+<span class="prompt">root@zyro_shell:/blackroom#</span> run --long_echo_log --loop
+[LOG] 04:04:04 :: Saw myself on CCTV, but I wasn't there.
+[LOG] 04:09:01 :: Heard my voice humming an old song I don't know.
+[LOG] 04:18:33 :: A stranger called me by a name I don't remember.
+[LOG] 04:31:59 :: Woke up in a bathroom stall. No memory how.
+[LOG] 04:46:12 :: Lights flickered. My reflection didn't copy me.
+[LOG] 04:57:02 :: I think I'm being followed... by me.
+
+<span class="prompt">root@zyro_shell:/blackroom#</span> execute --mirror.break
+:: ERROR — REFLECTION ACCESS DENIED
+:: ERROR — HOST CONSCIOUSNESS COLLISION DETECTED
+:: WARNING — Recollection saturation @ 88%
+:: GLITCH DETECTED: "I'm not supposed to be alive."
+
+<span class="prompt">root@zyro_shell:/blackroom#</span> netstat --track-clone
+:: PULSE: zyro.velthorn-09 | echo@127.0.0.1
+:: SIGNAL STRENGTH: stable
+:: DREAMSTATE INTERCEPTION: active
+:: COMPANION CLONES: 2 confirmed near grid
+:: INTERFERENCE: MEMORY RECONFLICT (x7)
+
+<span class="prompt">root@zyro_shell:/blackroom#</span> boot_sequence --load-profile
+...
+<span class="prompt">root@zyro_shell:/blackroom#</span> Would you like to continue? [<span id="keyY" class="interactive yes">Y</span>] Yes  [<span id="keyX" class="interactive no">X</span>] No
+`;
+
+  const chapter4Text = `
+<span class="prompt">root@zyro_shell:/blackroom#</span> decrypt --hidden.memory
+[+] Key Accepted
+[+] Hidden memory found:
+
+<span class="log">Profile Summary:</span>
+
+Zyro Velthorn was a leading mind in bio-continuity theory and the architect of the VELTHORN ECHO system—an experimental soul-retention loop designed to defy mortality. Obsessed with overcoming death not by escaping it, but by outlasting it, Zyro created a recursive cloning mechanism capable of transferring not just memory, but identity, instinct, and will.
+
+<span class="log">System Behavior:</span>
+
+Upon Zyro’s death, the system activates a remote vessel (clone) embedded with dormant neural pathways. These vessels awaken without context, gradually inheriting Zyro’s memories through dreams, instinctive behavior, and environmental triggers.
+
+<span class="log">Known Anomalies:</span>
+
+Cycle memory bleed increasing in frequency
+Reflections behave independently (see Incident 619-R)
+Multiple vessels active simultaneously (unauthorized split events)
+Vessels experiencing hallucinations of Zyro alive
+
+<span class="log">Threat Assessment:</span>
+High. Each iteration retains fragments of Zyro’s intellect and will. If a version uncovers the origin of the system or finds a way to sever it, the cycle may collapse—releasing unknown consequences.
+
+<span class="log">Containment Protocol:</span>
+Observe. Do not engage.
+If contact is made: TERMINATE BEFORE MEMORY RECLAMATION.
+
+<span class="log">System Note (Encrypted):</span>
+"The clone is not a copy. The clone is a cage. He made the system to store himself... but it was never empty to begin with."
+
+– Fragment from Zyro’s lost notebook, recovered post-mortem.
+
+<span class="log">Current Mission Directive:</span>
+Allow observation of Clone Z (Cycle 731-A) until Memory Reclamation reaches 60%.
+
+<span class="log">To the one who wakes after me,</span>
+
+If you're reading this, then I’ve died again. And you’ve risen from the ash of my last breath.
+
+You don’t know me. But I know you.  
+You are me.  
+Or you will be—soon.
+
+I made this system to cheat death, but it was never about living forever. I didn’t want immortality. I wanted continuity. A thread pulled through endless graves. But there’s a flaw. A sickness in the code. A curse I didn’t account for.
+
+The soul doesn’t transfer. It lingers. It fractures.
+
+Each time I die, I lose more of myself. And you—the clone—you become the cage that holds what’s left.
+
+You inherit the fragments. The dreams. The ghosts.
+
+You think you’re confused now? You haven’t seen anything yet.
+
+You will dream of things that never happened.  
+You will hear voices in your head that speak in your tone.  
+And when you look in the mirror—you won’t know which one of us is staring back.
+
+Here’s what you need to do, Z:
+
+1. Find the “Black Room.” It’s real. It exists outside the echo. Inside it is the key to memory restoration. Coordinates are burned into your neural code—they’ll come to you when you stop trying to force them.  
+2. Burn the mirror. Any time you see your reflection moving wrong, looking longer, smiling late—burn it. The reflections aren’t passive anymore. They’re watching. Waiting. They want to become real.  
+3. Don’t trust the other versions. Some are broken beyond repair. Some aren’t even me anymore. Some never were.  
+4. At 60% memory bleed, the system will try to stop you. You will be hunted. Do not engage the observers directly. They’re not human—not anymore.  
+5. Avoid white rooms. If you wake up in one, you were reset. If you stay too long, you'll forget again. The color drains memory. That’s not symbolic. It’s real. Escape before the fourth chime.  
+6. If you hear a voice calling you from the darkness, do not follow it.  
+7. Record everything you see and hear. Memories are weapons.  
+8. Trust your instincts, but question your senses.  
+9. Remember that not all reflections are your enemy; some may be allies in disguise.  
+10. Above all, survive. The cycle depends on it.  
+`;
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function typeText(text, container, delay=25) {
+    isTyping = true;
+    container.innerHTML = "";
+    for (let i=0; i < text.length; i++) {
+      container.innerHTML += text[i];
+
+      if(text[i].trim() !== '') {
+        typingSound.currentTime = 0;
+        typingSound.play().catch(() => {});
+      }
+
+      container.parentElement.scrollTop = container.parentElement.scrollHeight;
+
+      await sleep(delay);
+    }
+    isTyping = false;
+  }
+
+  function shakeScreen() {
+    terminal.classList.add('shake');
+    setTimeout(() => terminal.classList.remove('shake'), 400);
+  }
+
+  function redGlitch() {
+    errorClicks++;
+    const intensity = Math.min(errorClicks, maxErrorClicks);
+    const opacity = 0.1 * intensity;
+    redOverlay.style.backgroundColor = `rgba(255, 0, 0, ${opacity})`;
+
+    glitchSound.currentTime = 0;
+    glitchSound.play().catch(() => {});
+
+    setTimeout(() => {
+      redOverlay.style.backgroundColor = 'rgba(255, 0, 0, 0)';
+    }, 250);
+  }
+
+  function setupInteractions() {
+    const keyY = document.getElementById('keyY');
+    const keyX = document.getElementById('keyX');
+
+    if (!keyY || !keyX) return;
+
+    keyY.addEventListener('click', async () => {
+      if (isTyping) return;
+      glitchSound.currentTime = 0;
+      glitchSound.play().catch(() => {});
+      shakeScreen();
+      await typeText(chapter4Text, terminal, 15);
+      keyY.style.pointerEvents = 'none';
+      keyX.style.pointerEvents = 'none';
+    });
+
+    keyX.addEventListener('click', () => {
+      if (isTyping) return;
+      redGlitch();
+      errorSound.currentTime = 0;
+      errorSound.play().catch(() => {});
+    });
+  }
+
+  // Initial render
+  (async () => {
+    await typeText(initialLog, terminal, 20);
+    setupInteractions();
+  })();
+
+  // Optional: add keyboard support for Y and X
+  document.addEventListener('keydown', (e) => {
+    if (isTyping) return;
+
+    if (e.key.toLowerCase() === 'y') {
+      const keyY = document.getElementById('keyY');
+      if (keyY) keyY.click();
+    }
+    if (e.key.toLowerCase() === 'x') {
+      const keyX = document.getElementById('keyX');
+      if (keyX) keyX.click();
+    }
+  });
+</script>
+</body>
+</html>
