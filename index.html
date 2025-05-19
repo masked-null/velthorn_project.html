@@ -65,6 +65,7 @@
   </div>
 
   <script>
+    const terminal = document.getElementById('terminal');
     const log = document.getElementById('logText');
 
     const initialText = `
@@ -159,9 +160,9 @@ It was always someone else who blinked."
 </span>
 `;
 
-    const terminal = document.getElementById('terminal');
     log.innerHTML = initialText;
 
+    // Audio context
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
 
@@ -189,15 +190,26 @@ It was always someone else who blinked."
     }
 
     let extraShown = false;
-    window.addEventListener('keydown', (e) => {
-      if (e.key.toLowerCase() === 'y' && !extraShown) {
+    function handleKey(e) {
+      const key = e.key.toLowerCase();
+      if (key === 'y' && !extraShown) {
         extraShown = true;
         log.innerHTML += extraInfo;
         terminal.scrollTop = terminal.scrollHeight;
       }
-      if (e.key.toLowerCase() === 'x') {
+      if (key === 'x') {
         playErrorSound();
         showGlitchOverlay();
+      }
+    }
+
+    terminal.addEventListener('keydown', handleKey);
+    terminal.focus();
+
+    // On click anywhere, resume audio (for browsers that block it)
+    document.body.addEventListener('click', () => {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
       }
     });
   </script>
