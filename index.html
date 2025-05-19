@@ -246,5 +246,37 @@ Cycle Zero. Prime Origin.</span>`;
 
     window.onload = typeLine;
   </script>
+  document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'y') showProfile();
+      if (e.key.toLowerCase() === 'x') triggerSystemFailure();
+    });
+
+    window.onload = typeLine;
+  </script>
+
+  <!-- START: Buttons for mobile interaction -->
+  <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 999;">
+    <button onclick="showProfile()" style="
+      background: black;
+      color: #00ff99;
+      border: 1px solid #00cc66;
+      padding: 10px 20px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 16px;
+      margin-right: 10px;
+      cursor: pointer;
+    ">[Y] Yes</button>
+
+    <button onclick="triggerSystemFailure()" style="
+      background: black;
+      color: #cc0000;
+      border: 1px solid #cc0000;
+      padding: 10px 20px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 16px;
+      cursor: pointer;
+    ">[X] No</button>
+  </div>
+  <!-- END: Buttons for mobile interaction -->
 </body>
 </html>
