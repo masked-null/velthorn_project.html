@@ -111,15 +111,13 @@
 :: COMPANION CLONES: 2 confirmed near grid
 :: INTERFERENCE: MEMORY RECONFLICT (x7)
 
-<span class="prompt">root@zyro_shell:/blackroom#</span> log --final.warning
-<span class="error">[!] CODE RED: CLONE ZV09 IS NEARING AWARENESS LIMIT</span>
-<span class="error">[!] PRESENCE BREACH: Original entity memories unlocked</span>
-<span class="error">[!] SYSTEM OVERRIDE: Zyro can now see the code</span>
-<span class="error">[!] BOOT LOOP INEVITABLE — ESCAPE IMPOSSIBLE</span>
-
+const initialLog = `
+<span class="prompt">root@zyro_shell:/blackroom#</span> boot_sequence --load-profile
+...
 <span class="prompt">root@zyro_shell:/blackroom#</span> Would you like to continue? [<span id="keyY" class="interactive" style="cursor:pointer; color:#00ff99;">Y</span>] Yes  [<span id="keyX" class="interactive" style="cursor:pointer; color:#cc0000;">X</span>] No
+`;
 
-  let isTyping = false;
+let isTyping = false;  //
 
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
