@@ -278,5 +278,19 @@ Cycle Zero. Prime Origin.</span>`;
     ">[X] No</button>
   </div>
   <!-- END: Buttons for mobile interaction -->
+document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'y') showProfile();
+      if (e.key.toLowerCase() === 'x') triggerSystemFailure();
+    });
+
+    window.onload = typeLine;
+  </script>
+
+  <!-- Buttons go here -->
+  <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 999;">
+    <button onclick="showProfile()" style="...">[Y] Yes</button>
+    <button onclick="triggerSystemFailure()" style="...">[X] No</button>
+  </div>
+
 </body>
 </html>
