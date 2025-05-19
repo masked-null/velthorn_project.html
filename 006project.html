@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>zyro.velthorn // terminal log</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #00cc66;
+      font-family: 'Share Tech Mono', monospace;
+      height: 100%;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    #terminal {
+      padding: 40px;
+      white-space: pre-line;
+      overflow-y: auto;
+      height: 100vh;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 1;
+    }
+
+    .prompt { color: #00ff99; }
+    .error { color: #cc0000; }
+    .log { color: #00ffcc; }
+    .interactive {
+      color: #00ff99;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+      text-decoration: underline;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-5px, 0); }
+      40% { transform: translate(5px, 0); }
+      60% { transform: translate(-5px, 0); }
+      80% { transform: translate(5px, 0); }
+    }
+
+    .shake {
+      animation: shake 0.4s;
+    }
+
+    .red-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 0, 0, 0.2);
+      pointer-events: none;
+      z-index: 999;
+      animation: glitchFade 0.3s ease-out;
+    }
+
+    @keyframes glitchFade {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    ::selection {
+      background: #00ff99;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal"></div>
+
+  <audio id="typingSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+  <audio id="glitchSound" src="https://actions.google.com/sounds/v1/alarms/bugle_tune.ogg" preload="auto"></audio>
+  <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
+
+  <script>
+    const terminal = document.getElementById('terminal');
+    const typingSound = document.getElementById('typingSound');
+    const glitchSound = document.getElementById('glitchSound');
+    const errorSound = document.getElementById('errorSound');
+
+    let isTyping = false;
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function typeText(text, container, delay = 25) {
+      isTyping = true;
+      container.innerHTML = "";
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        container.innerHTML += char;
+        if (char.trim()) {
+          typingSound.currentTime = 0;
+          typingSound.play().catch(() => {});
+        }
+        container.scrollTop = container.scrollHeight;
+        await sleep(delay);
+      }
+      isTyping = false;
+    }
+
+    function shakeScreen() {
+      terminal.classList.add('shake');
+      setTimeout(() => terminal.classList.remove('shake'), 400);
+    }
+
+    function showRedOverlay() {
+      const overlay = document.createElement('div');
+      overlay.className = 'red-overlay';
+      document.body.appendChild(overlay);
+      setTimeout(() => {
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      }, 300);
+    }
+
+    const initialLog = `
+<span class="prompt">root@zyro_shell:/blackroom#</span> boot_sequence --load-profile
+[+] Loading terminal...
+[+] Patching fractured memory...
+[+] Random thread 0x92: "She looked exactly like me."
+[+] Deep Echo Initialized: Awareness + 5%
+[+] Root Trace Running.... ██░░░░░░░░░░ 12%
+[+] Black Room Reflection Depth: 94%
+[+] Subconscious Override Flag Raised
+
+<span class="prompt">root@zyro_shell:/blackroom#</span> cat /data/core/identity.zv
+:: ID: Zyro Velthorn
+:: TYPE: Clone (Cycle 9)
+:: STATUS: AWAKE (Level 3)
+:: LOCATION: /unknown/grid/
+:: PARANOIA SIGNAL: Rising
+:: CODED WHISPERS: "Zyro... find the original..."
+:: INIT DATE: redacted
+
+<span class="prompt">root@zyro_shell:/blackroom#</span> run --long_echo_log --loop
+[LOG] 04:04:04 :: Saw myself on CCTV, but I wasn't there.
+[LOG] 04:09:01 :: Heard my voice humming an old song I don't know.
+[LOG] 04:18:33 :: A stranger called me by a name I don't remember.
+[LOG] 04:31:59 :: Woke up in a bathroom stall. No memory how.
+[LOG] 04:46:12 :: Lights flickered. My reflection didn't copy me.
+[LOG] 04:57:02 :: I think I'm being followed... by me.
+
+<span class="prompt">root@zyro_shell:/blackroom#</span> execute --mirror.break
+:: ERROR — REFLECTION ACCESS DENIED
+:: ERROR — HOST CONSCIOUSNESS COLLISION DETECTED
+:: WARNING — Recollection saturation @ 88%
+:: GLITCH DETECTED: "I'm not supposed to be alive."
+
+<span class="prompt">root@zyro_shell:/blackroom#</span> netstat --track-clone
+:: PULSE: zyro.velthorn-09 | echo@127.0.0.1
+:: SIGNAL STRENGTH: stable
+:: DREAMSTATE INTERCEPTION: active
+:: COMPANION CLONES: 2 confirmed near grid
+:: INTERFERENCE: MEMORY RECONFLICT (x7)
+
+<span class="prompt">root@zyro_shell:/blackroom#</span> Would you like to continue? [<span id="keyY" class="interactive">Y</span>] Yes  [<span id="keyX" class="interactive">X</span>] No
+`;
+
+    const chapter4Text = `
+<span class="prompt">root@zyro_shell:/blackroom#</span> decrypt --hidden.memory
+[+] Key Accepted
+[+] Hidden memory found:
+
+<span class="log">To the one who wakes after me,</span>
+
+If you're reading this, then I’ve died again. And you’ve risen from the ash of my last breath.
+
+You don’t know me. But I know you.  
+You are me.  
+Or you will be—soon.
+
+I made this system to cheat death, but it was never about living forever. I didn’t want immortality. I wanted continuity. A thread pulled through endless graves. But there’s a flaw. A sickness in the code. A curse I didn’t account for.
+
+The soul doesn’t transfer. It lingers. It fractures.
+
+Each time I die, I lose more of myself. And you—the clone—you become the cage that holds what’s left.
+
+You inherit the fragments. The dreams. The ghosts.
+
+You think you’re confused now? You haven’t seen anything yet.
+
+You will dream of things that never happened.  
+You will hear voices in your head that speak in your tone.  
+And when you look in the mirror—you won’t know which one of us is staring back.
+
+<span class="log">Instructions:</span>
+1. Find the “Black Room.”  
+2. Burn every mirror.  
+3. Don’t trust other clones.  
+4. Hide during memory spikes.  
+5. Ignore the whispers.  
+6. Run if a version smiles wrong.  
+7. Avoid white rooms.  
+8. Do not sleep near reflections.  
+9. Kill nothing unless it knows your name.  
+10. If you remember dying, you’re the original.
+
+Good luck, Z.
+`;
+
+    async function setupInteractive() {
+      const keyY = document.getElementById('keyY');
+      const keyX = document.getElementById('keyX');
+
+      function disableInteraction() {
+        keyY.style.pointerEvents = 'none';
+        keyX.style.pointerEvents = 'none';
+        keyY.style.color = '#004422';
+        keyX.style.color = '#440000';
+        keyY.style.textDecoration = 'none';
+        keyX.style.textDecoration = 'none';
+      }
+
+      async function onYes() {
+        if (isTyping) return;
+        disableInteraction();
+        shakeScreen();
+        glitchSound.currentTime = 0;
+        glitchSound.play().catch(() => {});
+        await sleep(500);
+        await typeText(chapter4Text, terminal, 20);
+      }
+
+      let errorClicks = 0;
+      function onNo() {
+        if (isTyping) return;
+        errorClicks++;
+        errorSound.currentTime = 0;
+        errorSound.play().catch(() => {});
+        showRedOverlay();
+        terminal.innerHTML += `\n<span class="error">:: SYSTEM FAILURE DETECTED (${errorClicks})</span>`;
+      }
+
+      keyY.addEventListener('click', onYes);
+      keyX.addEventListener('click', onNo);
+
+      document.addEventListener('keydown', e => {
+        if (e.key.toLowerCase() === 'y') onYes();
+        if (e.key.toLowerCase() === 'x') onNo();
+      });
+    }
+
+    (async () => {
+      await typeText(initialLog, terminal, 25);
+      setupInteractive();
+    })();
+  </script>
+</body>
+</html>
