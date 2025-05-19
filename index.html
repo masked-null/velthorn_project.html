@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>zyro.velthorn // terminal log</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
@@ -30,43 +30,25 @@
     .prompt { color: #00ff99; }
     .error { color: #cc0000; }
     .log { color: #00ffcc; }
-
-    .system-failure {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 0, 0, 0.15);
-      mix-blend-mode: screen;
-      animation: glitch 0.3s infinite;
-      color: red;
-      font-size: 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      z-index: 99;
-    }
-
-    @keyframes glitch {
-      0% { transform: translate(0px, 0px); opacity: 0.3; }
-      25% { transform: translate(-5px, 2px); opacity: 0.4; }
-      50% { transform: translate(4px, -3px); opacity: 0.5; }
-      75% { transform: translate(-2px, 4px); opacity: 0.4; }
-      100% { transform: translate(0px, 0px); opacity: 0.3; }
-    }
-
-    .shake {
-      animation: shake 0.5s;
+    .interactive {
+      color: #00ff99;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+      text-decoration: underline;
     }
 
     @keyframes shake {
-      0% { transform: translate(0px, 0px); }
-      25% { transform: translate(5px, 0px); }
-      50% { transform: translate(-5px, 0px); }
-      75% { transform: translate(5px, 0px); }
-      100% { transform: translate(0px, 0px); }
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-5px, 0); }
+      40% { transform: translate(5px, 0); }
+      60% { transform: translate(-5px, 0); }
+      80% { transform: translate(5px, 0); }
+      100% { transform: translate(0, 0); }
+    }
+
+    .shake {
+      animation: shake 0.4s;
     }
 
     ::selection {
@@ -76,12 +58,20 @@
   </style>
 </head>
 <body>
-  <div id="terminal"><span id="logBuffer"></span></div>
+  <div id="terminal"></div>
 
-  <audio id="glitchSound" src="https://cdn.pixabay.com/download/audio/2023/03/08/audio_ee9cdebf8a.mp3?filename=glitch-ambient-14646.mp3" preload="auto"></audio>
+  <audio id="typingSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+  <audio id="glitchSound" src="https://actions.google.com/sounds/v1/alarms/bugle_tune.ogg" preload="auto"></audio>
+  <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
 
-  <script>
-    const initialText = `
+<script>
+  const terminal = document.getElementById('terminal');
+  const typingSound = document.getElementById('typingSound');
+  const glitchSound = document.getElementById('glitchSound');
+  const errorSound = document.getElementById('errorSound');
+
+  // Initial terminal log with interactive Y and X letters
+  const initialLog = `
 <span class="prompt">root@zyro_shell:/blackroom#</span> boot_sequence --load-profile
 [+] Loading terminal...
 [+] Patching fractured memory...
@@ -127,42 +117,47 @@
 <span class="error">[!] SYSTEM OVERRIDE: Zyro can now see the code</span>
 <span class="error">[!] BOOT LOOP INEVITABLE — ESCAPE IMPOSSIBLE</span>
 
-<span class="prompt">root@zyro_shell:/blackroom#</span> Would you like to continue? [Y] Yes  [X] No
+<span class="prompt">root@zyro_shell:/blackroom#</span> Would you like to continue? [<span id="keyY" class="interactive">Y</span>] Yes  [<span id="keyX" class="interactive">X</span>] No
 `;
 
-    const logBuffer = document.getElementById('logBuffer');
-    const glitchSound = document.getElementById('glitchSound');
-    const body = document.body;
+  let isTyping = false;
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Typing animation function
+  async function typeText(html, container, typingDelay = 25) {
+    isTyping = true;
+    container.innerHTML = "";
     let i = 0;
-    let isTyping = false;
 
-    function playSound() {
-      glitchSound.currentTime = 0;
-      glitchSound.play();
+    while(i < html.length) {
+      const char = html[i];
+      container.innerHTML += char;
+      if (char.trim() !== "") {
+        typingSound.currentTime = 0;
+        typingSound.play().catch(() => {});
+      }
+      // Scroll terminal down while typing
+      container.parentElement.scrollTop = container.parentElement.scrollHeight;
+
+      await sleep(typingDelay);
+      i++;
     }
+    isTyping = false;
+  }
 
-    function typeLine(text, callback) {
-      isTyping = true;
-      let j = 0;
-      const interval = setInterval(() => {
-        if (j < text.length) {
-          logBuffer.innerHTML += text[j] === '\n' ? '<br>' : text[j];
-          playSound();
-          j++;
-        } else {
-          clearInterval(interval);
-          isTyping = false;
-          if (callback) callback();
-        }
-      }, 12);
-    }
+  // Screen shake effect on Y press
+  function shakeScreen() {
+    terminal.classList.add('shake');
+    setTimeout(() => {
+      terminal.classList.remove('shake');
+    }, 400);
+  }
 
-    function showProfile() {
-      body.classList.add('shake');
-      setTimeout(() => body.classList.remove('shake'), 500);
-
-      const hiddenText = `
-
+  // Display chapter 4 text with typing animation
+  const chapter4Text = `
 <span class="prompt">root@zyro_shell:/blackroom#</span> decrypt --hidden.memory
 [+] Key Accepted
 [+] Hidden memory found:
@@ -177,16 +172,16 @@ Upon Zyro’s death, the system activates a remote vessel (clone) embedded with 
 
 <span class="log">Known Anomalies:</span>
 
-Cycle memory bleed increasing in frequency  
-Reflections behave independently (see Incident 619-R)  
-Multiple vessels active simultaneously (unauthorized split events)  
-Vessels experiencing hallucinations of Zyro alive  
+Cycle memory bleed increasing in frequency
+Reflections behave independently (see Incident 619-R)
+Multiple vessels active simultaneously (unauthorized split events)
+Vessels experiencing hallucinations of Zyro alive
 
 <span class="log">Threat Assessment:</span>
 High. Each iteration retains fragments of Zyro’s intellect and will. If a version uncovers the origin of the system or finds a way to sever it, the cycle may collapse—releasing unknown consequences.
 
 <span class="log">Containment Protocol:</span>
-Observe. Do not engage.  
+Observe. Do not engage.
 If contact is made: TERMINATE BEFORE MEMORY RECLAMATION.
 
 <span class="log">System Note (Encrypted):</span>
@@ -194,42 +189,95 @@ If contact is made: TERMINATE BEFORE MEMORY RECLAMATION.
 
 – Fragment from Zyro’s lost notebook, recovered post-mortem.
 
+<span class="log">Current Mission Directive:</span>
+Allow observation of Clone Z (Cycle 731-A) until Memory Reclamation reaches 60%.
+
 <span class="log">To the one who wakes after me,</span>
 
-If you're reading this, then I’ve died again. And you’ve risen from the ash of my last breath.  
+If you're reading this, then I’ve died again. And you’ve risen from the ash of my last breath.
+
 You don’t know me. But I know you.  
-You are me. Or you will be—soon.
+You are me.  
+Or you will be—soon.
 
-...
+I made this system to cheat death, but it was never about living forever. I didn’t want immortality. I wanted continuity. A thread pulled through endless graves. But there’s a flaw. A sickness in the code. A curse I didn’t account for.
 
-Break the cycle. Burn the system.  
-If you can’t... Then don’t wake the next one.
+The soul doesn’t transfer. It lingers. It fractures.
 
-<span class="log">– Zyro Velthorn  
-Cycle Zero. Prime Origin.</span>`;
+Each time I die, I lose more of myself. And you—the clone—you become the cage that holds what’s left.
 
-      typeLine(hiddenText);
+You inherit the fragments. The dreams. The ghosts.
+
+You think you’re confused now? You haven’t seen anything yet.
+
+You will dream of things that never happened.  
+You will hear voices in your head that speak in your tone.  
+And when you look in the mirror—you won’t know which one of us is staring back.
+
+Here’s what you need to do, Z:
+
+Find the “Black Room.” It’s real. It exists outside the echo. Inside it is the key to memory restoration. Coordinates are burned into your neural code—they’ll come to you when you stop trying to force them.  
+Burn the mirror. Any time you see your reflection moving wrong, looking longer, smiling late—burn it. The reflections aren’t passive anymore. They’re watching. Waiting. They want to become real.  
+Don’t trust the other versions. Some are broken beyond repair. Some aren’t even me anymore. Some never were.  
+At 60% memory bleed, the system will try to stop you. You will be hunted. Do not engage the observers directly. They’re not human—not anymore.  
+Avoid white rooms. If you wake up in one, you were reset. If you stay too long, you'll forget again. The color drains memory. That’s not symbolic. It’s real. Escape before the fourth chime.
+`;
+
+  // After initial log is typed, set up listeners on Y and X spans
+  async function setupInteractive() {
+    const keyY = document.getElementById('keyY');
+    const keyX = document.getElementById('keyX');
+
+    function disableInteraction() {
+      keyY.style.pointerEvents = 'none';
+      keyX.style.pointerEvents = 'none';
+      keyY.style.color = '#004422';
+      keyX.style.color = '#440000';
+      keyY.style.textDecoration = 'none';
+      keyX.style.textDecoration = 'none';
     }
 
-    function triggerSystemFailure() {
-      body.classList.add('shake');
-      setTimeout(() => body.classList.remove('shake'), 500);
-      const fail = document.createElement('div');
-      fail.className = 'system-failure';
-      fail.innerText = '[SYSTEM FAILURE] CODE RED: Cycle unstable.';
-      document.body.appendChild(fail);
-      playSound();
-    }
-
-    document.addEventListener('keydown', (e) => {
+    // Handler for Y - continue with chapter 4 + effects
+    async function onYes() {
       if (isTyping) return;
-      if (e.key.toLowerCase() === 'y') showProfile();
-      if (e.key.toLowerCase() === 'x') triggerSystemFailure();
-    });
+      disableInteraction();
+      shakeScreen();
+      glitchSound.currentTime = 0;
+      glitchSound.play().catch(() => {});
+      await sleep(500);
+      await typeText(chapter4Text, terminal, 20);
+    }
 
-    window.onload = () => {
-      typeLine(initialText);
-    };
-  </script>
+    // Handler for X - no continue, just print message immediately
+    function onNo() {
+      if (isTyping) return;
+      disableInteraction();
+      errorSound.currentTime = 0;
+      errorSound.play().catch(() => {});
+      terminal.innerHTML += `
+
+<span class="prompt">root@zyro_shell:/blackroom#</span> abort --exit
+Session terminated by user. Goodbye.
+`;
+    }
+
+    keyY.addEventListener('click', onYes);
+    keyX.addEventListener('click', onNo);
+
+    // Keyboard bindings too
+    document.addEventListener('keydown', e => {
+      if (isTyping) return;
+      if (e.key.toLowerCase() === 'y') onYes();
+      if (e.key.toLowerCase() === 'x') onNo();
+    });
+  }
+
+  // Run initial typing animation then setup interactive keys
+  (async () => {
+    await typeText(initialLog, terminal, 25);
+    setupInteractive();
+  })();
+
+</script>
 </body>
 </html>
