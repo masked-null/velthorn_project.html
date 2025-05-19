@@ -1,73 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>zyro.velthorn // terminal log</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+<meta charset="UTF-8" />
+<title>zyro.velthorn // terminal log</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      color: #00cc66;
-      font-family: 'Share Tech Mono', monospace;
-      height: 100%;
-      overflow: hidden;
-      cursor: crosshair;
-    }
+  html, body {
+    margin: 0; padding: 0;
+    background: #000;
+    color: #00cc66;
+    font-family: 'Share Tech Mono', monospace;
+    height: 100%;
+    overflow: hidden;
+    cursor: crosshair;
+  }
 
-    #terminal {
-      padding: 40px;
-      white-space: pre-line;
-      overflow-y: auto;
-      height: 100vh;
-      box-sizing: border-box;
-      position: relative;
-      z-index: 1;
-    }
+  #terminal {
+    padding: 40px;
+    white-space: pre-wrap;
+    overflow-y: auto;
+    height: 100vh;
+    box-sizing: border-box;
+  }
 
-    .prompt { color: #00ff99; }
-    .error { color: #cc0000; }
-    .log { color: #00ffcc; }
+  .prompt { color: #00ff99; }
+  .error { color: #cc0000; }
+  .log { color: #00ffcc; }
 
-    .system-failure {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 0, 0, 0.15);
-      mix-blend-mode: screen;
-      animation: glitch 0.3s infinite;
-      color: red;
-      font-size: 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      z-index: 99;
-    }
+  .system-failure {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(255, 0, 0, 0.15);
+    mix-blend-mode: screen;
+    animation: glitch 0.3s infinite;
+    color: red;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 99;
+  }
 
-    @keyframes glitch {
-      0% { transform: translate(0px, 0px); opacity: 0.3; }
-      25% { transform: translate(-5px, 2px); opacity: 0.4; }
-      50% { transform: translate(4px, -3px); opacity: 0.5; }
-      75% { transform: translate(-2px, 4px); opacity: 0.4; }
-      100% { transform: translate(0px, 0px); opacity: 0.3; }
-    }
+  @keyframes glitch {
+    0% { transform: translate(0px, 0px); opacity: 0.3; }
+    25% { transform: translate(-5px, 2px); opacity: 0.4; }
+    50% { transform: translate(4px, -3px); opacity: 0.5; }
+    75% { transform: translate(-2px, 4px); opacity: 0.4; }
+    100% { transform: translate(0px, 0px); opacity: 0.3; }
+  }
 
-    ::selection {
-      background: #00ff99;
-      color: #000;
-    }
-  </style>
+  ::selection {
+    background: #00ff99;
+    color: #000;
+  }
+</style>
 </head>
 <body>
   <div id="terminal"><span id="logBuffer"></span></div>
 
-  <script>
-    const logText = `
+<script>
+  // Text content to type
+  const logText = `
 <span class="prompt">root@zyro_shell:/blackroom#</span> boot_sequence --load-profile
 [+] Loading terminal...
 [+] Patching fractured memory...
@@ -116,19 +112,7 @@
 <span class="prompt">root@zyro_shell:/blackroom#</span> Would you like to continue? [Y] Yes  [X] No
 `;
 
-    let i = 0;
-    const logBuffer = document.getElementById('logBuffer');
-
-    function typeLine() {
-      if (i < logText.length) {
-        logBuffer.innerHTML += logText[i] === '\n' ? '<br>' : logText[i];
-        i++;
-        setTimeout(typeLine, 12);
-      }
-    }
-
-    function showProfile() {
-      logBuffer.innerHTML += `
+  const profileText = `
 <br><span class="prompt">root@zyro_shell:/blackroom#</span> decrypt --hidden.memory
 [+] Key Accepted
 [+] Hidden memory found:
@@ -226,71 +210,117 @@ Break the cycle. Burn the system.
 If you can’t... Then don’t wake the next one.
 
 <span class="log">– Zyro Velthorn  
-Cycle Zero. Prime Origin.</span>`;
+Cycle Zero. Prime Origin.</span>
+`;
+
+  const logBuffer = document.getElementById('logBuffer');
+
+  // Audio context for sounds
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioContext();
+
+  function playTypingSound() {
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(700 + Math.random() * 500, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.02, audioCtx.currentTime);
+
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.04);
+
+    osc.onended = () => {
+      gainNode.disconnect();
+      osc.disconnect();
+    };
+  }
+
+  function playErrorSound() {
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
+
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    osc.start();
+    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.12);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+
+    osc.stop(audioCtx.currentTime + 0.12);
+
+    osc.onended = () => {
+      gainNode.disconnect();
+      osc.disconnect();
+    };
+  }
+
+  let isTyping = false;
+  let profileTyped = false;
+
+  function typeText(text, callback) {
+    if (isTyping) return;
+    isTyping = true;
+    let idx = 0;
+    function type() {
+      if (idx < text.length) {
+        const char = text[idx];
+        if(char === '\n') {
+          logBuffer.innerHTML += '<br>';
+        } else {
+          logBuffer.innerHTML += char;
+        }
+        idx++;
+        // random typing sound chance
+        if (Math.random() < 0.3) playTypingSound();
+        logBuffer.parentElement.scrollTop = logBuffer.parentElement.scrollHeight;
+        setTimeout(type, 10 + Math.random() * 15);
+      } else {
+        isTyping = false;
+        if(callback) callback();
+      }
     }
+    type();
+  }
 
-    let failureCount = 0;
-    function triggerSystemFailure() {
-      failureCount++;
-      const fail = document.createElement('div');
-      fail.className = 'system-failure';
-      fail.innerText = '[SYSTEM FAILURE] CODE RED: Cycle unstable.';
-      fail.style.zIndex = 100 + failureCount;
-      document.body.appendChild(fail);
+  // Initialize typing main log
+  typeText(logText);
+
+  // Handle keypresses for Y and X
+  window.addEventListener('keydown', (e) => {
+    if (isTyping) return; // prevent interrupting typing
+
+    if(e.key.toLowerCase() === 'y') {
+      if(!profileTyped) {
+        playTypingSound();
+        profileTyped = true;
+        typeText(profileText);
+      }
+    } else if(e.key.toLowerCase() === 'x') {
+      // error sound and red overlay glitch effect
+      playErrorSound();
+      showGlitchOverlay();
     }
+  });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key.toLowerCase() === 'y') showProfile();
-      if (e.key.toLowerCase() === 'x') triggerSystemFailure();
-    });
+  function showGlitchOverlay() {
+    if(document.querySelector('.system-failure')) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'system-failure';
+    overlay.textContent = 'SYSTEM FAILURE: TERMINATING...';
+    document.body.appendChild(overlay);
 
-    window.onload = typeLine;
-  </script>
-  document.addEventListener('keydown', (e) => {
-      if (e.key.toLowerCase() === 'y') showProfile();
-      if (e.key.toLowerCase() === 'x') triggerSystemFailure();
-    });
-
-    window.onload = typeLine;
-  </script>
-
-  <!-- START: Buttons for mobile interaction -->
-  <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 999;">
-    <button onclick="showProfile()" style="
-      background: black;
-      color: #00ff99;
-      border: 1px solid #00cc66;
-      padding: 10px 20px;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 16px;
-      margin-right: 10px;
-      cursor: pointer;
-    ">[Y] Yes</button>
-
-    <button onclick="triggerSystemFailure()" style="
-      background: black;
-      color: #cc0000;
-      border: 1px solid #cc0000;
-      padding: 10px 20px;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 16px;
-      cursor: pointer;
-    ">[X] No</button>
-  </div>
-  <!-- END: Buttons for mobile interaction -->
-document.addEventListener('keydown', (e) => {
-      if (e.key.toLowerCase() === 'y') showProfile();
-      if (e.key.toLowerCase() === 'x') triggerSystemFailure();
-    });
-
-    window.onload = typeLine;
-  </script>
-
-  <!-- Buttons go here -->
-  <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 999;">
-    <button onclick="showProfile()" style="...">[Y] Yes</button>
-    <button onclick="triggerSystemFailure()" style="...">[X] No</button>
-  </div>
-
+    setTimeout(() => {
+      overlay.remove();
+    }, 3000);
+  }
+</script>
 </body>
 </html>
