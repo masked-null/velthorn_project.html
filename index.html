@@ -15,7 +15,6 @@
       height: 100%;
       overflow: hidden;
       cursor: crosshair;
-      transition: background-color 0.3s ease;
     }
 
     #terminal {
@@ -37,12 +36,8 @@
       user-select: none;
       text-decoration: underline;
     }
-    .interactive.yes {
-      color: #00ff99;
-    }
-    .interactive.no {
-      color: #cc0000;
-    }
+    .interactive.yes { color: #00ff99; }
+    .interactive.no { color: #cc0000; }
 
     @keyframes shake {
       0% { transform: translate(0, 0); }
@@ -55,21 +50,6 @@
 
     .shake {
       animation: shake 0.4s;
-    }
-
-    @keyframes glitch-bg {
-      0%, 100% { background-color: #000; }
-      50% { background-color: #003300; }
-    }
-
-    .glitch-bg {
-      animation: glitch-bg 0.5s infinite;
-    }
-
-    /* Red flash glitch for error effect */
-    @keyframes error-glitch {
-      0%, 100% { background-color: #000; }
-      50% { background-color: #880000; }
     }
 
     ::selection {
@@ -91,6 +71,10 @@
   const glitchSound = document.getElementById('glitchSound');
   const errorSound = document.getElementById('errorSound');
 
+  let isTyping = false;
+  let errorClicks = 0;
+
+  // Initial terminal log with interactive Y and X letters
   const initialLog = `
 <span class="prompt">root@zyro_shell:/blackroom#</span> boot_sequence --load-profile
 [+] Loading terminal...
@@ -117,10 +101,6 @@
 [LOG] 04:31:59 :: Woke up in a bathroom stall. No memory how.
 [LOG] 04:46:12 :: Lights flickered. My reflection didn't copy me.
 [LOG] 04:57:02 :: I think I'm being followed... by me.
-[LOG] 05:11:19 :: Fragments of past memories clash in the black haze.
-[LOG] 05:25:44 :: System logs indicate multiple consciousness overlaps.
-[LOG] 05:39:50 :: Encountered another clone—identity unverified.
-[LOG] 05:52:17 :: Memory bleed accelerating; containment weakening.
 
 <span class="prompt">root@zyro_shell:/blackroom#</span> execute --mirror.break
 :: ERROR — REFLECTION ACCESS DENIED
@@ -139,66 +119,6 @@
 ...
 <span class="prompt">root@zyro_shell:/blackroom#</span> Would you like to continue? [<span id="keyY" class="interactive yes">Y</span>] Yes  [<span id="keyX" class="interactive no">X</span>] No
 `;
-
-  let isTyping = false;
-  let errorClicks = 0; // Count of how many times No was clicked to increase glitch effect
-
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  async function typeText(html, container, typingDelay = 25) {
-    isTyping = true;
-    container.innerHTML = "";
-    let i = 0;
-
-    while(i < html.length) {
-      const char = html[i];
-      container.innerHTML += char;
-      if (char.trim() !== "") {
-        typingSound.currentTime = 0;
-        typingSound.play().catch(() => {});
-      }
-      container.parentElement.scrollTop = container.parentElement.scrollHeight;
-      await sleep(typingDelay);
-      i++;
-    }
-    isTyping = false;
-  }
-
-  function shakeScreen() {
-    terminal.classList.add('shake');
-    setTimeout(() => {
-      terminal.classList.remove('shake');
-    }, 400);
-  }
-
-  function glitchEffect(duration = 2000) {
-    terminal.classList.add('glitch-bg');
-    glitchSound.currentTime = 0;
-    glitchSound.play().catch(() => {});
-    setTimeout(() => {
-      terminal.classList.remove('glitch-bg');
-    }, duration);
-  }
-
-  function errorGlitchEffect() {
-    // Increase red glitch intensity with each click, max 5 times for safety
-    errorClicks = Math.min(errorClicks + 1, 5);
-    let flashes = errorClicks * 2; // number of red flashes
-
-    let count = 0;
-    const interval = setInterval(() => {
-      if (count >= flashes) {
-        terminal.style.backgroundColor = '#000';
-        clearInterval(interval);
-        return;
-      }
-      // Alternate between red and black background
-      terminal.style.backgroundColor = (count % 2 === 0) ? '#880000' : '#000';
-      count++;
-    }, 150);
-  }
 
   const chapter4Text = `
 <span class="prompt">root@zyro_shell:/blackroom#</span> decrypt --hidden.memory
@@ -264,51 +184,125 @@ Here’s what you need to do, Z:
 3. Don’t trust the other versions. Some are broken beyond repair. Some aren’t even me anymore. Some never were.  
 4. At 60% memory bleed, the system will try to stop you. You will be hunted. Do not engage the observers directly. They’re not human—not anymore.  
 5. Avoid white rooms. If you wake up in one, you were reset. If you stay too long, you'll forget again. The color drains memory. That’s not symbolic. It’s real. Escape before the fourth chime.  
-6. Keep a log of all encounters. Memories are fragile; documentation helps anchor your identity.  
-7. Use neural blockers sparingly; they disrupt but also shield against memory corruption.  
-8. Seek fragments in discarded echoes. Past versions sometimes leave hidden clues.  
-9. Trust your instincts over implanted commands. The system’s logic is flawed.  
-10. Remember: the cycle can be broken—but only if you survive the collapse.
+6. If you hear a voice calling you from the darkness, do not follow it.  
+7. Record everything you see and hear. Memories are weapons.  
+8. Trust your instincts, but question your senses.  
+9. Remember that not all reflections are your enemy; some may be allies in disguise.  
+10. Above all, survive. The cycle depends on it.  
 `;
 
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Typing animation function
+  async function typeText(html, container, typingDelay = 25) {
+    isTyping = true;
+    container.innerHTML = "";
+    let i = 0;
+
+    while(i < html.length) {
+      const char = html[i];
+      container.innerHTML += char;
+
+      // Play typing sound on visible char (skip spaces)
+      if (char.trim() !== "") {
+        typingSound.currentTime = 0;
+        typingSound.play().catch(() => {});
+      }
+      // Scroll terminal down while typing
+      container.parentElement.scrollTop = container.parentElement.scrollHeight;
+
+      await sleep(typingDelay);
+      i++;
+    }
+    isTyping = false;
+  }
+
+  // Screen shake effect on Y press
+  function shakeScreen() {
+    terminal.classList.add('shake');
+    setTimeout(() => {
+      terminal.classList.remove('shake');
+    }, 400);
+  }
+
+  // Red glitch background effect for No clicks
+  function errorGlitchEffect() {
+    errorClicks++;
+    const maxClicks = 5;
+    const intensity = Math.min(errorClicks, maxClicks);
+    const opacity = 0.1 * intensity;
+
+    let overlay = document.getElementById('redOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'redOverlay';
+      Object.assign(overlay.style, {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: `rgba(255, 0, 0, ${opacity})`,
+        pointerEvents: 'none',
+        zIndex: '9999',
+        transition: 'background-color 0.3s ease-out',
+      });
+      document.body.appendChild(overlay);
+    } else {
+      overlay.style.backgroundColor = `rgba(255, 0, 0, ${opacity})`;
+    }
+
+    setTimeout(() => {
+      if (overlay) {
+        overlay.style.backgroundColor = 'rgba(255, 0, 0, 0)';
+      }
+    }, 200);
+  }
+
+  // Setup interactive buttons Y and X
   async function setupInteractive() {
     const keyY = document.getElementById('keyY');
     const keyX = document.getElementById('keyX');
 
-    function disableInteraction() {
+    if (!keyY || !keyX) return;
+
+    keyY.addEventListener('click', async () => {
+      if (isTyping) return;
+      glitchSound.currentTime = 0;
+      glitchSound.play().catch(() => {});
+      shakeScreen();
+      await typeText(chapter4Text, terminal, 15);
+      // Remove interaction after Yes
       keyY.style.pointerEvents = 'none';
       keyX.style.pointerEvents = 'none';
-      keyY.style.color = '#004422';
-      keyX.style.color = '#440000';
-      keyY.style.textDecoration = 'none';
-      keyX.style.textDecoration = 'none';
-    }
+    });
 
-    async function onYes() {
-      if (isTyping) return;
-      disableInteraction();
-      shakeScreen();
-      glitchEffect(3000);
-      await sleep(1000);
-      await typeText(chapter4Text, terminal, 20);
-    }
-
-    function onNo() {
+    keyX.addEventListener('click', () => {
       if (isTyping) return;
       errorSound.currentTime = 0;
       errorSound.play().catch(() => {});
       errorGlitchEffect();
-      shakeScreen();
-    }
+    });
 
-    keyY.addEventListener('click', onYes);
-    keyX.addEventListener('click', onNo);
+    // Make buttons accessible on keyboard (Y and X keys)
+    document.addEventListener('keydown', async (e) => {
+      if (isTyping) return;
+      if (e.key.toLowerCase() === 'y') {
+        keyY.click();
+      } else if (e.key.toLowerCase() === 'x') {
+        keyX.click();
+      }
+    });
   }
 
-  (async function init() {
-    await typeText(initialLog, terminal);
-    await setupInteractive();
-  })();
+  async function init() {
+    await typeText(initialLog, terminal, 20);
+    setupInteractive();
+  }
+
+  window.onload = init;
 </script>
 </body>
 </html>
