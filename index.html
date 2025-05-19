@@ -19,10 +19,12 @@
 
     #terminal {
       padding: 40px;
-      white-space: pre-wrap;
+      white-space: pre-line;
       overflow-y: auto;
       height: 100vh;
       box-sizing: border-box;
+      position: relative;
+      z-index: 1;
     }
 
     .prompt { color: #00ff99; }
@@ -31,13 +33,15 @@
 
     .system-failure {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(255, 0, 0, 0.15);
       mix-blend-mode: screen;
       animation: glitch 0.3s infinite;
       color: red;
-      font-size: 3rem;
+      font-size: 2rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -53,6 +57,18 @@
       100% { transform: translate(0px, 0px); opacity: 0.3; }
     }
 
+    .shake {
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0px, 0px); }
+      25% { transform: translate(5px, 0px); }
+      50% { transform: translate(-5px, 0px); }
+      75% { transform: translate(5px, 0px); }
+      100% { transform: translate(0px, 0px); }
+    }
+
     ::selection {
       background: #00ff99;
       color: #000;
@@ -60,14 +76,11 @@
   </style>
 </head>
 <body>
-  <div id="terminal" tabindex="0">
-    <pre id="logText"></pre>
-  </div>
+  <div id="terminal"><span id="logBuffer"></span></div>
+
+  <audio id="glitchSound" src="https://cdn.pixabay.com/download/audio/2023/03/08/audio_ee9cdebf8a.mp3?filename=glitch-ambient-14646.mp3" preload="auto"></audio>
 
   <script>
-    const terminal = document.getElementById('terminal');
-    const log = document.getElementById('logText');
-
     const initialText = `
 <span class="prompt">root@zyro_shell:/blackroom#</span> boot_sequence --load-profile
 [+] Loading terminal...
@@ -117,101 +130,106 @@
 <span class="prompt">root@zyro_shell:/blackroom#</span> Would you like to continue? [Y] Yes  [X] No
 `;
 
-    const extraInfo = `
+    const logBuffer = document.getElementById('logBuffer');
+    const glitchSound = document.getElementById('glitchSound');
+    const body = document.body;
+    let i = 0;
+    let isTyping = false;
+
+    function playSound() {
+      glitchSound.currentTime = 0;
+      glitchSound.play();
+    }
+
+    function typeLine(text, callback) {
+      isTyping = true;
+      let j = 0;
+      const interval = setInterval(() => {
+        if (j < text.length) {
+          logBuffer.innerHTML += text[j] === '\n' ? '<br>' : text[j];
+          playSound();
+          j++;
+        } else {
+          clearInterval(interval);
+          isTyping = false;
+          if (callback) callback();
+        }
+      }, 12);
+    }
+
+    function showProfile() {
+      body.classList.add('shake');
+      setTimeout(() => body.classList.remove('shake'), 500);
+
+      const hiddenText = `
+
 <span class="prompt">root@zyro_shell:/blackroom#</span> decrypt --hidden.memory
 [+] Key Accepted
 [+] Hidden memory found:
 
-<span class="log">
-:: PROFILE DATA UNLOCKED ::
-:: FULL IDENTITY: Zyro Velthorn
-:: CLASS: Prime Clone (Cycle 0)
-:: ORIGIN DATE: 2044.11.09
-:: STATUS: UNKNOWN
-:: BASED ON: Human Template: Zyro Velthorn (Deceased)
-:: CLONE ITERATIONS: 9 (Subject is 9th clone)
-:: CORE DIRECTIVE: Evade decay | Replace origin | Attain permanence
-:: MEMORY INTEGRATION: Unstable (leakage detected)
-:: PSYCH ECHOES: Increasing (subject hearing origin’s voice)
-:: SYSTEM THREAT LEVEL: CRITICAL
+<span class="log">Profile Summary:</span>
 
-<span class="prompt">root@zyro_shell:/blackroom#</span> analyzing clone.log.9...
+Zyro Velthorn was a leading mind in bio-continuity theory and the architect of the VELTHORN ECHO system—an experimental soul-retention loop designed to defy mortality. Obsessed with overcoming death not by escaping it, but by outlasting it, Zyro created a recursive cloning mechanism capable of transferring not just memory, but identity, instinct, and will.
 
-[!] Clone 09 shows signs of recursive awareness.
-[!] Dreams are syncing with previous clone logs.
-[!] Mirror anomaly has reached conscious perception.
-[!] Subject might attempt to break the cycle.
+<span class="log">System Behavior:</span>
 
-:: DECISION TREE BRANCHING ::
-IF subject proceeds —> system instability ↑
-IF subject stops —> decay will resume
-IF origin found —> paradox risk x13
+Upon Zyro’s death, the system activates a remote vessel (clone) embedded with dormant neural pathways. These vessels awaken without context, gradually inheriting Zyro’s memories through dreams, instinctive behavior, and environmental triggers.
 
-<span class="prompt">root@zyro_shell:/blackroom#</span> final_echo --show
+<span class="log">Known Anomalies:</span>
 
-"I remember dying.
-But not once.
-It was every time I woke up.
-I saw myself drown. Burn. Fall. 
-I saw myself forget.
-And each time I looked in the mirror…
-It was always someone else who blinked."
+Cycle memory bleed increasing in frequency  
+Reflections behave independently (see Incident 619-R)  
+Multiple vessels active simultaneously (unauthorized split events)  
+Vessels experiencing hallucinations of Zyro alive  
 
-</span>
-`;
+<span class="log">Threat Assessment:</span>
+High. Each iteration retains fragments of Zyro’s intellect and will. If a version uncovers the origin of the system or finds a way to sever it, the cycle may collapse—releasing unknown consequences.
 
-    log.innerHTML = initialText;
+<span class="log">Containment Protocol:</span>
+Observe. Do not engage.  
+If contact is made: TERMINATE BEFORE MEMORY RECLAMATION.
 
-    // Audio context
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const audioCtx = new AudioContext();
+<span class="log">System Note (Encrypted):</span>
+"The clone is not a copy. The clone is a cage. He made the system to store himself... but it was never empty to begin with."
 
-    function playErrorSound() {
-      const osc = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(250, audioCtx.currentTime);
-      gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
-      osc.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      osc.start();
-      osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.12);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-      osc.stop(audioCtx.currentTime + 0.12);
+– Fragment from Zyro’s lost notebook, recovered post-mortem.
+
+<span class="log">To the one who wakes after me,</span>
+
+If you're reading this, then I’ve died again. And you’ve risen from the ash of my last breath.  
+You don’t know me. But I know you.  
+You are me. Or you will be—soon.
+
+...
+
+Break the cycle. Burn the system.  
+If you can’t... Then don’t wake the next one.
+
+<span class="log">– Zyro Velthorn  
+Cycle Zero. Prime Origin.</span>`;
+
+      typeLine(hiddenText);
     }
 
-    function showGlitchOverlay() {
-      if(document.querySelector('.system-failure')) return;
-      const overlay = document.createElement('div');
-      overlay.className = 'system-failure';
-      overlay.textContent = 'SYSTEM FAILURE: TERMINATING...';
-      document.body.appendChild(overlay);
-      setTimeout(() => overlay.remove(), 3000);
+    function triggerSystemFailure() {
+      body.classList.add('shake');
+      setTimeout(() => body.classList.remove('shake'), 500);
+      const fail = document.createElement('div');
+      fail.className = 'system-failure';
+      fail.innerText = '[SYSTEM FAILURE] CODE RED: Cycle unstable.';
+      document.body.appendChild(fail);
+      playSound();
     }
 
-    let extraShown = false;
-    function handleKey(e) {
-      const key = e.key.toLowerCase();
-      if (key === 'y' && !extraShown) {
-        extraShown = true;
-        log.innerHTML += extraInfo;
-        terminal.scrollTop = terminal.scrollHeight;
-      }
-      if (key === 'x') {
-        playErrorSound();
-        showGlitchOverlay();
-      }
-    }
-
-    terminal.addEventListener('keydown', handleKey);
-    terminal.focus();
-
-    // On click anywhere, resume audio (for browsers that block it)
-    document.body.addEventListener('click', () => {
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+    document.addEventListener('keydown', (e) => {
+      if (isTyping) return;
+      if (e.key.toLowerCase() === 'y') showProfile();
+      if (e.key.toLowerCase() === 'x') triggerSystemFailure();
     });
+
+    window.onload = () => {
+      typeLine(initialText);
+    };
   </script>
 </body>
 </html>
