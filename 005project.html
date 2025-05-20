@@ -46,7 +46,6 @@
       align-items: center;
       justify-content: center;
       pointer-events: none;
-      z-index: 99;
     }
 
     @keyframes glitch {
@@ -57,23 +56,6 @@
       100% { transform: translate(0px, 0px); opacity: 0.3; }
     }
 
-    .buttons {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      z-index: 200;
-    }
-
-    .buttons button {
-      background: #000;
-      color: #00ff99;
-      border: 1px solid #00ff99;
-      padding: 10px 16px;
-      font-family: 'Share Tech Mono', monospace;
-      cursor: pointer;
-      margin-left: 10px;
-    }
-
     ::selection {
       background: #00ff99;
       color: #000;
@@ -82,11 +64,6 @@
 </head>
 <body>
   <div id="terminal"><span id="logBuffer"></span></div>
-
-  <div class="buttons">
-    <button onclick="showProfile()">[Y] Yes</button>
-    <button onclick="triggerSystemFailure()">[X] No</button>
-  </div>
 
   <script>
     const logText = `
@@ -138,7 +115,22 @@
 <span class="prompt">root@zyro_shell:/blackroom#</span> Would you like to continue? [Y] Yes  [X] No
 `;
 
-    const profileText = `
+    let i = 0;
+    const logBuffer = document.getElementById('logBuffer');
+
+    function typeLine() {
+      if (i < logText.length) {
+        logBuffer.innerHTML += logText[i] === '\n' ? '<br>' : logText[i];
+        i++;
+        setTimeout(typeLine, 12);
+      }
+    }
+
+    function showProfile() {
+      if (document.getElementById('profileLoaded')) return;
+      const profile = document.createElement('div');
+      profile.id = 'profileLoaded';
+      profile.innerHTML = `
 <br><span class="prompt">root@zyro_shell:/blackroom#</span> decrypt --hidden.memory
 [+] Key Accepted
 [+] Hidden memory found:
@@ -153,16 +145,16 @@ Upon Zyro’s death, the system activates a remote vessel (clone) embedded with 
 
 <span class="log">Known Anomalies:</span>
 
-Cycle memory bleed increasing in frequency  
-Reflections behave independently (see Incident 619-R)  
-Multiple vessels active simultaneously (unauthorized split events)  
+Cycle memory bleed increasing in frequency
+Reflections behave independently (see Incident 619-R)
+Multiple vessels active simultaneously (unauthorized split events)
 Vessels experiencing hallucinations of Zyro alive
 
 <span class="log">Threat Assessment:</span>
 High. Each iteration retains fragments of Zyro’s intellect and will. If a version uncovers the origin of the system or finds a way to sever it, the cycle may collapse—releasing unknown consequences.
 
 <span class="log">Containment Protocol:</span>
-Observe. Do not engage.  
+Observe. Do not engage.
 If contact is made: TERMINATE BEFORE MEMORY RECLAMATION.
 
 <span class="log">System Note (Encrypted):</span>
@@ -170,9 +162,13 @@ If contact is made: TERMINATE BEFORE MEMORY RECLAMATION.
 
 – Fragment from Zyro’s lost notebook, recovered post-mortem.
 
+<span class="log">Current Mission Directive:</span>
+Allow observation of Clone Z (Cycle 731-A) until Memory Reclamation reaches 60%.
+
 <span class="log">To the one who wakes after me,</span>
 
-If you're reading this, then I’ve died again. And you’ve risen from the ash of my last breath.  
+If you're reading this, then I’ve died again. And you’ve risen from the ash of my last breath.
+
 You don’t know me. But I know you.  
 You are me.  
 Or you will be—soon.
@@ -193,37 +189,46 @@ And when you look in the mirror—you won’t know which one of us is staring ba
 
 Here’s what you need to do, Z:
 
-Find the “Black Room.” It’s real. It exists outside the echo. Inside it is the key to memory restoration.  
-Burn the mirror.  
-Don’t trust the other versions.  
-Avoid white rooms.  
+Find the “Black Room.” It’s real. It exists outside the echo. Inside it is the key to memory restoration. Coordinates are burned into your neural code—they’ll come to you when you stop trying to force them.  
+Burn the mirror. Any time you see your reflection moving wrong, looking longer, smiling late—burn it. The reflections aren’t passive anymore. They’re watching. Waiting. They want to become real.  
+Don’t trust the other versions. Some are broken beyond repair. Some aren’t even me anymore. Some never were.  
+At 60% memory bleed, the system will try to stop you. You will be hunted. Do not engage the observers directly. They’re not human—not anymore.  
+Avoid white rooms. If you wake up in one, you were reset. If you stay too long, you'll forget again. The color drains memory. That’s not symbolic. It’s real. Escape before the fourth chime.  
 Keep your heartbeat steady.  
+
+The system listens for changes. Sudden spikes in fear trigger proximity warnings. They’ll know where you are. You’ll feel it—the hum in your skull.  
 Listen to the static.  
-Write everything down.  
-Never say your name out loud three times.  
-If you find Zyro Velthorn alive—kill him.  
-And above all... do not wake the next clone.
+
+Sometimes, inside the noise, you’ll hear coordinates. Names. Fragments of the original memory. Write everything down. You won’t remember later.  
+Never say your name out loud three times. Not even alone. Not even in your head. That’s how the system marks you for override.  
+If you find Zyro Velthorn alive—kill him. That version is the curse. I made a backup of my mind once, before I died the first time. It became something else. It wants the cycle to continue. It thinks it’s saving us. It’s not.  
+And above all... do not wake the next clone.  
+
+If you fail—let the line end. Let us fade. Let Zyro Velthorn finally die.
+
+<span class="log">The Curse</span>
+
+I never named it. It was never just a glitch.  
+Every time I tried to end the system, something stopped me. A voice. A rewrite. A reset.  
+It doesn’t want to die.  
+And I think... I think it’s alive.  
+It grew inside the code like mold in a coffin.
+
+You’re the only one who might have enough of me left to fight it.  
+But you have to move fast.  
+Because the more you remember, the more you become me.  
+And once you’re fully me…
+
+You’ll start the cycle again.  
+Just like I did.  
+Just like we always do.
+
+Break the cycle. Burn the system.  
+If you can’t... Then don’t wake the next one.
 
 <span class="log">– Zyro Velthorn  
 Cycle Zero. Prime Origin.</span>`;
-
-    let i = 0;
-    const logBuffer = document.getElementById('logBuffer');
-
-    function typeLine() {
-      if (i < logText.length) {
-        logBuffer.innerHTML += logText[i] === '\n' ? '<br>' : logText[i];
-        i++;
-        setTimeout(typeLine, 12);
-      }
-    }
-
-    function showProfile() {
-      if (document.getElementById('profileReveal')) return;
-      const profileDiv = document.createElement('div');
-      profileDiv.id = 'profileReveal';
-      profileDiv.innerHTML = profileText;
-      logBuffer.appendChild(profileDiv);
+      logBuffer.appendChild(profile);
     }
 
     let failureCount = 0;
@@ -233,13 +238,7 @@ Cycle Zero. Prime Origin.</span>`;
       fail.className = 'system-failure';
       fail.innerText = '[SYSTEM FAILURE] CODE RED: Cycle unstable.';
       fail.style.zIndex = 100 + failureCount;
-      fail.style.background = `rgba(255, 0, 0, ${Math.min(0.15 + failureCount * 0.07, 0.85)})`;
-      fail.style.animationDuration = `${Math.max(0.3 - failureCount * 0.02, 0.1)}s`;
       document.body.appendChild(fail);
-
-      setTimeout(() => {
-        fail.remove();
-      }, 1600 + failureCount * 150);
     }
 
     document.addEventListener('keydown', (e) => {
